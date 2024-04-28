@@ -52,7 +52,9 @@ const text = readFileSync(inputFile, 'utf-8');
 
 const transformedText = tranformPunctuations(text);
 
-writeFileSync(inputFile, transformedText, 'utf-8');
+if (text !== transformedText) {
+  writeFileSync(inputFile, transformedText, 'utf-8');
+}
 ```
 
 ## 最後に
