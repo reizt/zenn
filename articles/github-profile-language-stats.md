@@ -10,7 +10,7 @@ published: true
 
 リポジトリにあるこういうやつと同じチャートをGithubのプロフィールにも表示したい！
 
-![](/images/github-language-stats/want.png)
+![](/images/github-profile-language-stats/want.png)
 
 ## 技術選定
 
@@ -73,11 +73,11 @@ jobs:
 
 ライトテーマ
 
-![](/images/github-language-stats/profile-light.png)
+![](/images/github-profile-language-stats/profile-light.png)
 
 ダークテーマ
 
-![](/images/github-language-stats/profile-dark.png)
+![](/images/github-profile-language-stats/profile-dark.png)
 
 プロフィールページはこちら
 
