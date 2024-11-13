@@ -1,5 +1,5 @@
 ---
-title: 'Githubで使用してる言語のチャートを出力するAPIを作った'
+title: '【Githubキラキラプロフィール計画】使っている言語の割合チャートを自作する'
 emoji: '📊'
 type: 'tech' # tech: 技術記事 / idea: アイデア
 topics: [Github, TypeScript]
@@ -8,18 +8,21 @@ published: true
 
 ## やりたいこと
 
-こういうのをGithubのプロフィールに表示したい！
+リポジトリにあるこういうやつと同じチャートをGithubのプロフィールにも表示したい！
 
 ![](/images/github-language-stats/want.png)
 
 ## 技術選定
 
 ### データ取得
-Github APIでリポジトリごとの言語の行数を取得できる。
-具体的には以下のGraphQLクエリで取得する。
+
+Github APIでリポジトリごとの言語の行数を取得できます。
+
+具体的には以下のGraphQLクエリで取得します。
+
 ```graphql
-query userInfo($login: String!, $limit: Int!) {
-  user(login: $login) {
+query userInfo($username: String!, $limit: Int!) {
+  user(login: $username) {
     repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
       nodes {
         name
@@ -39,18 +42,53 @@ query userInfo($login: String!, $limit: Int!) {
 ```
 
 ### 画像生成
-Githubのプロフィールに表示するには画像にする必要がある。
 
-そこでVercelが開発した[Satori](https://github.com/vercel/satori)というライブラリがあり、ReactをSVGに変換することができるらしいので、これを使ってみる。
+Githubのプロフィールに表示するには画像にする必要があります。
+
+そこでVercelが開発した[Satori](https://github.com/vercel/satori)というライブラリがあり、ReactをSVGに変換することができるので、これを使いました。
+
+同時にAPIもTypeScript+Reactで作ることが決定しました。
+
+### デプロイ先
+
+Edge runtimeでカジュアルにTypeScriptのAPIをデプロイできるのでVercelを選択しました。
+
+### 自動更新
+
+README.mdの画像にAPIのURLを指定してしまうと、パフォーマンスとAPI制限の懸念があるので、Github Actionsをcronで毎日実行してSVGをリポジトリにコミットするようにしました。
+
+```yaml: .github/workflows/update.yml
+name: Update Language Stats
+on:
+  schedule:
+    - cron: 0 0 * * *
+jobs:
+  # ...
+```
 
 ## できたもの
 
-![](/images/github-language-stats/output.png)
+馴染んでていい感じです！
+
+
+ライトテーマ
+
+![](/images/github-language-stats/profile-light.png)
+
+ダークテーマ
+
+![](/images/github-language-stats/profile-dark.png)
+
+プロフィールページはこちら
+
+https://github.com/reizt
 
 ## 課題
 
-satoriでSVG化を行う際、フォントをファイルで指定する必要があるのだが、本家のフォントはシステムフォントを使っているためでファイルを手にいれることができず、近しいフォントを使うしかなさそうだったが、何か方法があるかもしれない。
+satoriでSVG化を行う際、フォントをファイルで渡す必要があるのですが、本家のフォントはシステムフォントを使っているためファイルを手に入れることができず、近しいフォントを使うしかなかったです。
+
+何か方法があればいいのですが、、
 
 ## 最後に
 
-VercelでAPIを公開しているので、https://github.com/reizt/gh-stats-api のREADMEを読んで是非プロフィールに表示してみてください！
+APIは公開しているので、 https://github.com/reizt/gh-stats-api のREADMEを読んで是非あなたのプロフィールにも表示してみてください！
