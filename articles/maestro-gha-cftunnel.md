@@ -218,7 +218,7 @@ echo "🧹 Cleanup completed"
 ## 動かしてみる
 
 まずは自分のPCでCloudflare Tunnelにcurlしてみる
-![](/images/maestro-gha-cftunnel/local.mov)
+![](/images/maestro-gha-cftunnel/local.gif)
 
 Cloudflare Tunnel経由でMaestroを動かせていることがわかる🔥
 
