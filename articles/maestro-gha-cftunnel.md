@@ -24,7 +24,7 @@ Maestroのデメリット
 - Github Actionsで実行するにはMaestro Cloudが必要で、Webだと定額の$125/moとやや高額
 - Maestro CLIを使って実行するとChromeDriver周りのバグで失敗する(https://github.com/mobile-dev-inc/maestro/issues/2576)
 
-なんとか無料でやりたい。。
+でもなんとか無料でやりたい。。
 
 ## そこで本記事の解決策
 - [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)でローカルPCのWebサーバーをパブリックドメインに公開
@@ -53,13 +53,6 @@ Access>Service authで「Create Service Token」
 作成された認証情報を保存
 
 ![](/images/maestro-gha-cftunnel/screen-service-token-created.png)
-
-認証情報はGithub Action Secretsに登録する
-
-```sh
-gh secret set SERVICE_TOKEN_ID --body "..."
-gh secret set SERVICE_TOKEN_SECRET --body "..."
-```
 
 #### 手順1.2. Policyを作成する
 
@@ -98,11 +91,13 @@ Add public hostnameをクリック
 ### 手順2. Maestro実行用PCの設定
 `cloudflared`というCLIを使ってCloudflare Tunnelに接続する
 
-⚠️ NAME, DOMAIN, TUNNEL_IDは適宜置き換えてください
+⚠️ NAME, DOMAIN, TUNNEL_ID, USERNAMEは適宜置き換えてください
 
 ```sh
 # cloudflaredをインストール
 brew install cloudflared
+# ログイン
+cloudflared tunnel login
 # トンネル作成
 cloudflared tunnel create <NAME> # IDが出るのでメモ
 # ルーティング設定
@@ -113,7 +108,7 @@ cloudflared tunnel route dns <NAME> <DOMAIN>
 
 ```yml
 tunnel: <TUNNEL_ID>
-credentials-file: /Users/r/.cloudflared/<TUNNEL_ID>.json
+credentials-file: /Users/<USERNAME>/.cloudflared/<TUNNEL_ID>.json
 ingress:
   - hostname: <DOMAIN>
     service: http://127.0.0.1:8000
@@ -134,7 +129,7 @@ server.jsの実装
 - Webアプリを立ち上げる
 - maestro実行
 
-:::code 実際のコード
+:::details 実際のコード
 
 ```js: server.js
 import { execSync } from 'node:child_process';
@@ -218,12 +213,59 @@ echo "🧹 Cleanup completed"
 
 :::
 
+> 💡 macOSならNodeサーバーを`launchctl`を使って常時稼働状態にするなどの運用方法が現実的と思われる
+
 ## 動かしてみる
-- まずはターミナルからcurlでTunnelを呼び出してみる
-- 動いた！
-- Github ActionsのWorkflow fileにこれを書くだけ
-  - secretの設定はする
-- プルリク作ってみる
-- 動いた！
+
+まずは自分のPCでCloudflare Tunnelにcurlしてみる
+![](/images/maestro-gha-cftunnel/local.mov)
+
+Cloudflare Tunnel経由でMaestroを動かせていることがわかる🔥
+
+あとはGithub ActionsのWorkflow fileにこれを書くだけ
+
+Github Action Secretsにドメインと認証情報を登録する
+
+```sh
+gh secret set MAESTRO_TUNNEL_HOST --body "<DOMAIN>" # 先ほど設定したドメイン
+gh secret set SERVICE_TOKEN_ID --body "..."
+gh secret set SERVICE_TOKEN_SECRET --body "..."
+```
+
+Workflow fileはcurlするのみ
+
+```yml
+name: Maestro Web E2E
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: e2e
+jobs:
+  maestro-web-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run maestro test on MacBook via Cloudflare Tunnel
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          curl -fsSL "${{ secrets.MAESTRO_TUNNEL_HOST }}?branch=${{ env.BRANCH }}" \
+            -H "CF-Access-Client-Id: ${{ secrets.SERVICE_TOKEN_ID }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.SERVICE_TOKEN_SECRET }}"
+```
+
+これでmainにプルリクを作った際Maestroが動くようになりました🙌
 
 ## まとめ
+
+ローカルサーバーをパブリックドメインにホストできるCloudflare Tunnelを使えば、自宅サーバー的なことが簡単にできるので、いろいろ活用方法が考えられますね！
+
+今回はMaestroをGithub ActionsからローカルPC経由で実行するトリッキーなユースケースを紹介しました。
+
+何かの参考になれば幸いです！
