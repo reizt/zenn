@@ -2,7 +2,7 @@
 title: 'Cloudflare Tunnelを使ってGithub ActionsからMacbookにMaestroを実行させる'
 emoji: '🚇'
 type: 'tech'
-topics: ['Cloudflare Tunnel', 'Github Actions', 'Maestro']
+topics: ['Cloudflare Tunnel', 'Github Actions', 'Maestro', 'E2E']
 published: false
 ---
 
