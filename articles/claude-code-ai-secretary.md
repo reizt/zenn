@@ -34,6 +34,24 @@ Claude Routines（クラウド側の定期実行）も検討しましたが、He
 :::
 
 
+## 自作MCP
+
+このシステムで使っているMCPのうち3つは自作です。
+
+### Macrofactor MCP
+
+[Macrofactor](https://macrofactorapp.com) はカロリー管理アプリですが、APIを公開していません。データの取り出し手段はアプリ内からの手動エクスポート（CSV/XLSX）のみです。
+
+そこで、iPhoneからエクスポートしたファイルをiCloud Drive経由でmacOSに同期し、pandasで読み込むMCPサーバーを自作しました。少し手間ですが、エクスポートさえ済んでいればエージェントが体重・PFC・カロリー消費を参照できます。
+
+HealthKitとの連携でバックグラウンド自動同期ができれば手動エクスポートは不要になるので、今後の課題にしています。
+
+### Pushcut MCP / local-schedule MCP
+
+PushcutはHTTP APIがあるのでcurlでも叩けますが、`send_notification` などをMCPツールとして整備することで、エージェントから型安全に呼べるようにしました。
+
+local-schedule MCPはlaunchdジョブの作成・一覧・即時実行をMCPツールとして束ねたものです。ジョブ登録をClaude Codeのセッション内で完結させるために作りました。
+
 ## Phase別実装ウォーク
 
 実装はPhase 1〜3に分けて進めました。各フェーズで作成したのは `agents/` 配下のMarkdownプロンプトファイルで、`claude -p` にそのまま渡しています。
