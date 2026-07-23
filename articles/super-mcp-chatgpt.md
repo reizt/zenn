@@ -1,5 +1,5 @@
 ---
-title: '任意のAPIをChatGPTからアクセス可能にする「Super MCP」を作った話'
+title: '自作APIをChatGPTからアクセス可能にする「Super MCP」を作った話'
 emoji: '🧩'
 type: 'tech'
 topics: ['MCP', 'ChatGPT', 'OpenAPI', 'OAuth', 'Cloudflare']
@@ -15,10 +15,6 @@ published: false
 メドレーは「医療ヘルスケアの未来をつくる」をミッションに掲げ、テクノロジーを活用した事業やプロジェクトを通じて「納得できる医療」の実現を目指しています。人材プラットフォーム事業と医療プラットフォーム事業を展開し、医療、介護、福祉領域の人材採用や、医療機関と患者を支えるプロダクトを提供しています。
 
 本記事で紹介する**Super MCP**は、自作APIをChatGPTから使うために業務外で開発している個人用基盤です。Super MCPを作った背景と全体構成、OpenAPIからMCPコマンドを生成する仕組み、二方向のOAuthを扱うための設計について紹介します。
-
-:::message
-タイトルにある「任意のAPI」は、OpenAPIで記述できるHTTP APIを指します。複数の自作HTTP APIをChatGPTへ追加するたびに、MCPと認証を重複して実装している開発者を想定しています。
-:::
 
 ## 背景
 
