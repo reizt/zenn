@@ -36,11 +36,11 @@ published: false
 
 | コンポーネント        | 役割                         | 接続方法             |
 | --------------------- | ---------------------------- | -------------------- |
-| **Discord**           | リモート操作インターフェース | OpenClaw Discord Bot |
+| **Discord**           | 開発メンバー同士とAIとの会話 | OpenClaw Discord Bot |
 | **Linear**            | タスク管理・トリガー         | Webhook              |
 | **OpenClaw**          | エージェントの実行基盤       | Mac mini             |
 | **Claude Code**       | コード生成・編集             | CLI                  |
-| **Firecrawl**         | ドキュメント取得             | API                  |
+| **Firecrawl**         | スクレイピング               | API                  |
 | **Cloudflare Tunnel** | 外部アクセスの公開           | `cloudflared`        |
 
 外部からのリクエストは **Cloudflare Tunnel** を経由して Mac mini に到達します。
