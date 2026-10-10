@@ -3,7 +3,8 @@ title: '自作APIをChatGPTからアクセス可能にする「Super MCP」'
 emoji: '🧩'
 type: 'tech'
 topics: ['MCP', 'ChatGPT', 'OpenAPI', 'OAuth', 'Cloudflare']
-published: false
+published: true
+published_at: '2026-07-29 09:00'
 ---
 
 こちらの記事は「[MEDLEY Summer Tech Blog Relay](https://developer.medley.jp/entry/2026/07/09/234777/)」の12日目の記事です。
