@@ -28,7 +28,6 @@ published: false
 - 来店と内見の候補日時、確定、変更を反映する
 - 具体的な回答が必要なメールだけ「要返信」にする
 - 空室判明、募集終了、予約変更などをLINEへ通知する
-- 自動処理から漏れたメールをChatGPTのScheduled Taskで回収する
 
 通知を増やすと、今度は通知を読まなくなります。
 そのため、「新しいメール」ではなく「判断が変わったとき」だけLINEへ送るようにしました。
@@ -191,28 +190,6 @@ LINE Messaging APIには、メッセージIDから決定的に生成したretry 
 現在の状態管理は通常の再配信には対応しますが、厳密な多重実行対策としてはprocessing leaseを追加する余地があります。
 
 Cloudflare Queuesの配信保証も、[公式ドキュメント](https://developers.cloudflare.com/queues/reference/delivery-guarantees/)ではat-least-onceと説明されています。
-
-## Scheduled Taskを障害回収に使う
-
-Webhookから始まる経路だけでは、認証切れ、外部API障害、実装上の判定漏れをゼロにはできません。
-一方、ChatGPTのScheduled Taskだけで即時通知まで担わせると、接続アプリと通知先の制約を受けます。
-
-そこで、役割を次のように分けました。
-
-| 実行経路 | 役割 | 実行タイミング |
-| --- | --- | --- |
-| Cloudflare Worker | 通常の差分同期とLINE通知 | Gmail受信時 |
-| ChatGPT Scheduled Task | GmailとNotionの不整合修復 | 定期実行 |
-
-Scheduled Taskは、接続済みのGmailとNotionだけを使います。
-直近の物件メールとNotion全行を照合し、スレッドIDが存在しない、Gmailのほうが新しい、状況や予約日時が矛盾している場合だけスレッド全体を読みます。
-
-修復対象がなければ通知しません。
-修復した場合や人間の判断が必要な場合は、ChatGPTのScheduledに結果を残します。
-
-この経路はWorkerの代わりではありません。
-即時性はWorkerへ任せ、Scheduled Taskは異なる実装と認証経路から整合性を確認します。
-同じ処理を二重に動かすのではなく、通常処理と照合作業を分けています。
 
 ## 運用前に詰まったところ
 
