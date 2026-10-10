@@ -15,7 +15,6 @@ published: false
 ところが、表を整えるほど更新が面倒になり、「どの業者へ返事をしていないか」がNotionよりGmailのほうに残るようになりました。
 
 そこで、Gmailへ物件メールが届くと、内容を分類してNotionへ差分反映し、対応が必要な変化だけLINEへ通知する仕組みを作りました。
-HOME'SやSUUMOからLINE公式アカウントへ物件URLを共有すると、重複と希望条件を確認してNotionへ追加する経路もあります。
 
 <!-- TODO: スマートフォンで見たNotionの候補一覧を撮影する。物件名、担当者名、メールアドレスはマスクし、要返信と状況が同時に見える状態にする。保存先: /images/gmail-notion-line-property-hunt/notion-mobile.png -->
 
@@ -29,13 +28,12 @@ HOME'SやSUUMOからLINE公式アカウントへ物件URLを共有すると、�
 - 来店と内見の候補日時、確定、変更を反映する
 - 具体的な回答が必要なメールだけ「要返信」にする
 - 空室判明、募集終了、予約変更などをLINEへ通知する
-- LINEへ共有したHOME'SとSUUMOのURLを候補へ追加する
 - 自動処理から漏れたメールをChatGPTのScheduled Taskで回収する
 
 通知を増やすと、今度は通知を読まなくなります。
 そのため、「新しいメール」ではなく「判断が変わったとき」だけLINEへ送るようにしました。
 
-<!-- TODO: LINEに届いた「空室あり」「要返信」「共有物件を追加した」の3種類を一枚にまとめて撮影する。個人名と物件住所はマスクする。保存先: /images/gmail-notion-line-property-hunt/line-notifications.png -->
+<!-- TODO: LINEに届いた「空室あり」と「要返信」の通知を一枚にまとめて撮影する。個人名と物件住所はマスクする。保存先: /images/gmail-notion-line-property-hunt/line-notifications.png -->
 
 ## メール本文をWebhookへ流さない構成
 
@@ -194,29 +192,6 @@ LINE Messaging APIには、メッセージIDから決定的に生成したretry 
 
 Cloudflare Queuesの配信保証も、[公式ドキュメント](https://developers.cloudflare.com/queues/reference/delivery-guarantees/)ではat-least-onceと説明されています。
 
-## LINEを通知先と入力欄にする
-
-LINEは通知を受け取るだけでなく、物件候補を追加する入口にもしました。
-HOME'SまたはSUUMOのアプリで共有を押し、作成したLINE公式アカウントへURLを送ります。
-
-WorkerはLINE Webhookの署名を検証し、次の順で処理します。
-
-1. 送信者が自分のLINE user IDか確認する
-2. 対応ドメインのURLを抽出して正規化する
-3. Notionの物件URLとD1の処理履歴を調べる
-4. Notionに保存した希望条件を取得する
-5. GeminiのURL Contextで物件ページを読む
-6. 必須条件への明確な不一致がなければNotionへ追加する
-7. 追加したか、重複だったか、条件不一致だったかをLINEへ返す
-
-URLだけでなく、物件名、賃料、駅徒歩、面積からfingerprintも作ります。
-別の計測用URLで同じ物件が共有された場合でも、重複を見つけやすくするためです。
-
-物件ページに書かれていない条件を、モデルに推測させることはしません。
-たとえばRC造でも戸境壁の構造までは分からないため、「内見時確認」として残します。
-
-<!-- TODO: HOME'SまたはSUUMOからLINEへ共有し、「追加した」と返信される一連の画面を撮影する。物件名とURLの識別子はマスクする。保存先: /images/gmail-notion-line-property-hunt/line-share-flow.png -->
-
 ## Scheduled Taskを障害回収に使う
 
 Webhookから始まる経路だけでは、認証切れ、外部API障害、実装上の判定漏れをゼロにはできません。
@@ -253,16 +228,43 @@ Scheduled Taskは、接続済みのGmailとNotionだけを使います。
 push用service accountを作るだけでは足りませんでした。
 Pub/Sub service agentが、そのservice accountのOIDC tokenを作成できるようにする必要があります。
 
-### Notion Integrationへのページ共有が必要になる
-
-データベースへアクセスできても、希望条件を書いた別ページをIntegrationへ共有していなければ、物件URLの判定処理は失敗します。
-Notionの画面上で見えることと、Integrationから読めることは別でした。
-
 ### メール本文をログへ出さない
 
 物件メールには氏名、電話番号、希望日時が含まれることがあります。
 QueueとD1には本文を保存せず、例外ログも外部APIのレスポンスを短く切っています。
 Gmail OAuthのscopeも読み取り専用です。
+
+## 通知用LINEから生まれた入力経路
+
+メール同期が動き始めると、空室や要返信の連絡がLINE公式アカウントへ届くようになりました。
+通知を受け取るために作ったトーク画面ですが、当然こちらからもメッセージを送れます。
+
+HOME'SやSUUMOで見つけた物件を、この画面へ共有できたら便利かもしれない。
+
+この気づきから、公式LINEを物件候補の入力にも使うようにしました。
+メール同期はこの機能がなくても完結しており、後から追加した別の経路です。
+
+HOME'SまたはSUUMOのアプリで共有を押し、公式LINEへ物件URLを送ります。
+WorkerはLINE Webhookの署名を検証し、次の順で処理します。
+
+1. 送信者が自分のLINE user IDか確認する
+2. 対応ドメインのURLを抽出して正規化する
+3. Notionの物件URLとD1の処理履歴を調べる
+4. Notionに保存した希望条件を取得する
+5. GeminiのURL Contextで物件ページを読む
+6. 必須条件への明確な不一致がなければNotionへ追加する
+7. 追加、重複、条件不一致の結果をLINEへ返す
+
+URLだけでなく、物件名、賃料、駅徒歩、面積からfingerprintも作ります。
+別の計測用URLで同じ物件が共有された場合でも、重複を見つけやすくするためです。
+
+物件ページに書かれていない条件を、モデルに推測させることはしません。
+たとえばRC造でも戸境壁の構造までは分からないため、「内見時確認」として残します。
+
+この処理では、希望条件を書いたNotionページもIntegrationへ共有する必要があります。
+データベースが読めても、別ページが自動的に読めるわけではありません。
+
+<!-- TODO: HOME'SまたはSUUMOからLINEへ共有し、「追加した」と返信される一連の画面を撮影する。物件名とURLの識別子はマスクする。保存先: /images/gmail-notion-line-property-hunt/line-share-flow.png -->
 
 ## この構成が向く範囲
 
